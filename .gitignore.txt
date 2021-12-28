@@ -1,3 +1,0 @@
-/packages/
-/Students Dictionary/bin/
-/Students Dictionary/obj/
