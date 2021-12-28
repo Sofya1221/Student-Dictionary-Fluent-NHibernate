@@ -1,6 +1,7 @@
 ﻿using FluentNHibernate.Automapping;
 using FluentNHibernate.Cfg;
 using FluentNHibernate.Cfg.Db;
+using NHibernate.Tool.hbm2ddl;
 using NHibernate;
 using NHibernate.Cfg;
 using System;
@@ -66,6 +67,7 @@ namespace StudentsDictionary
 
         private static void BuildSchema(Configuration config)
         {
+            new SchemaExport(config).Execute(true, true, false);
         }
 
     }

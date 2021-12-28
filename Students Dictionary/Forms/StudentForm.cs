@@ -1,4 +1,5 @@
 ﻿using NHibernate;
+using StudentsDictionary.Repository.impl;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -13,8 +14,13 @@ namespace StudentsDictionary.Forms
 {
     public partial class StudentForm : Form
     {
+        private readonly StudentRepositoryImpl studentRepo;
+        private readonly GroupRepositoryImpl groupRepo;
         public StudentForm()
         {
+            ISession session = SessionFactory.OpenSession;
+            this.studentRepo = new StudentRepositoryImpl(session);
+            this.groupRepo = new GroupRepositoryImpl(session);
             InitializeComponent();
         }
 
@@ -30,48 +36,29 @@ namespace StudentsDictionary.Forms
 
         private void loadStudentData()
         {
-            ISession session = SessionFactory.OpenSession;
+            IList<Model.Student> students = this.studentRepo.GetAll();
+            studentsView.DataSource = students;
 
-            using (session)
-            {
-                IQuery query = session.CreateQuery("FROM Student");
-                IList<Model.Student> students = query.List<Model.Student>();
-                studentsView.DataSource = students;
-
-                IQuery query1 = session.CreateQuery("FROM Group");
-                comboBox1.DataSource = query1.List<Model.Group>().ToList();
-            }
+            IList<Model.Group> groups = this.groupRepo.GetAll();
+            comboBox1.DataSource = groups;
         }
 
         private void btnDelete_Click(object sender, EventArgs e)
         {
-            ISession session = SessionFactory.OpenSession;
-
-            using (session)
+            bool succsess = this.studentRepo.Delete(int.Parse(IdTxtBx.Text));
+            if (succsess)
             {
-                using (ITransaction transaction = session.BeginTransaction())
-                {
-                    try
-                    {
-                        IQuery query = session.CreateQuery("FROM Student WHERE Id = '" + IdTxtBx.Text + "'");
-                        Model.Student student = query.List<Model.Student>()[0];
-                        session.Delete(student);
-                        transaction.Commit();
+                loadStudentData();
 
-                        loadStudentData();
-
-                        IdTxtBx.Text = "";
-                        tFirstName.Text = "";
-                        tLastName.Text = "";
-                        tEmail.Text = "";
-                    }
-                    catch (Exception ex)
-                    {
-                        transaction.Rollback();
-                        throw ex;
-                    }
-                }
+                IdTxtBx.Text = "";
+                tFirstName.Text = "";
+                tLastName.Text = "";
+                tEmail.Text = "";
             }
+            else
+            {
+                System.Windows.Forms.MessageBox.Show("Студент не найден!");
+            }            
         }
 
         private void btnInsert_Click(object sender, EventArgs e)
@@ -80,30 +67,13 @@ namespace StudentsDictionary.Forms
 
             SetStudentInfo(student);
 
-            ISession session = SessionFactory.OpenSession;
-
-            using (session)
-            {
-                using (ITransaction transaction = session.BeginTransaction())
-                {
-                    try
-                    {
-                        session.Save(student);
-                        transaction.Commit();
-                        loadStudentData();
-
-                        tFirstName.Text = "";
-                        tLastName.Text = "";
-                        tEmail.Text = "";
-                    }
-                    catch (Exception ex)
-                    {
-                        transaction.Rollback();
-                        System.Windows.Forms.MessageBox.Show(ex.Message);
-                        throw ex;
-                    }
-                }
-            }
+            this.studentRepo.Save(student);
+            loadStudentData();
+            
+            tFirstName.Text = "";
+            tLastName.Text = "";
+            tEmail.Text = "";
+           
         }
 
         private void SetStudentInfo(Model.Student student)
@@ -116,34 +86,21 @@ namespace StudentsDictionary.Forms
 
         private void btnUpdate_Click(object sender, EventArgs e)
         {
-            //to update data we will load current data to our textbox and then update
-            ISession session = SessionFactory.OpenSession;
+            Model.Student student = this.studentRepo.GetById(int.Parse(IdTxtBx.Text));
 
-            using (session)
+            if (student != null)
             {
-                using (ITransaction transaction = session.BeginTransaction())
-                {
-                    try
-                    {
-                        IQuery query = session.CreateQuery("FROM Student WHERE Id = '" + IdTxtBx.Text + "'");
-                        Model.Student student = query.List<Model.Student>()[0];
-                        SetStudentInfo(student);
-                        session.Update(student);
-                        transaction.Commit();
+                SetStudentInfo(student);
+                this.studentRepo.Save(student);
 
-                        loadStudentData();
-
-                        IdTxtBx.Text = "";
-                        tFirstName.Text = "";
-                        tLastName.Text = "";
-                        tEmail.Text = "";
-                    }
-                    catch (Exception ex)
-                    {
-                        transaction.Rollback();
-                        throw ex;
-                    }
-                }
+                loadStudentData();
+                IdTxtBx.Text = "";
+                tFirstName.Text = "";
+                tLastName.Text = "";
+                tEmail.Text = "";
+            } else
+            {
+                System.Windows.Forms.MessageBox.Show("Студент не найден!");
             }
         }
 
@@ -156,38 +113,16 @@ namespace StudentsDictionary.Forms
             if (id == "")
                 return;
 
-            IList<Model.Student> student = getDataFromStudent(id);
+            Model.Student student = this.studentRepo.GetById(int.Parse(id));
 
-            IdTxtBx.Text = student[0].Id.ToString();
-            tFirstName.Text = student[0].FirstName.ToString();
-            tLastName.Text = student[0].LastName.ToString();
-            tEmail.Text = student[0].Email.ToString();
-            int index = comboBox1.Items.IndexOf(student[0].Group);
+            IdTxtBx.Text = student.Id.ToString();
+            tFirstName.Text = student.FirstName.ToString();
+            tLastName.Text = student.LastName.ToString();
+            tEmail.Text = student.Email.ToString();
+            int index = comboBox1.Items.IndexOf(student.Group);
             if (index != -1)
             {
                 comboBox1.SelectedIndex = index;
-            }
-        }
-
-        private IList<Model.Student> getDataFromStudent(string id)
-        {
-            ISession session = SessionFactory.OpenSession;
-
-            using (session)
-            {
-                using (ITransaction transaction = session.BeginTransaction())
-                {
-                    try
-                    {
-                        IQuery query = session.CreateQuery("FROM Student WHERE Id = '" + id+ "'");
-                        return query.List<Model.Student>();
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Windows.Forms.MessageBox.Show(ex.Message);
-                        throw ex;
-                    }
-                }
             }
         }
 

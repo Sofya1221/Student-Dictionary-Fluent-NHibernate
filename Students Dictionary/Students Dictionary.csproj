@@ -80,6 +80,9 @@
     <Compile Include="Model\Student.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Repository\impl\GroupRepositoryImpl.cs" />
+    <Compile Include="Repository\impl\StudentRepositoryImpl.cs" />
+    <Compile Include="Repository\IRepository.cs" />
     <Compile Include="SessionFactory.cs" />
     <EmbeddedResource Include="Forms\StudentForm.resx">
       <DependentUpon>StudentForm.cs</DependentUpon>
@@ -111,6 +114,7 @@
   <ItemGroup>
     <Content Include="nh.ico" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
